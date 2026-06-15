@@ -3,7 +3,25 @@ const KEY='DailyWalletV3';
 let db=JSON.parse(localStorage.getItem(KEY)||'{}');
 let deferredPrompt = null;
 
-function today(){return new Date().toISOString().split('T')[0];}
+// Get today's date in IST (UTC+5:30)
+function today(){
+  const now = new Date();
+  // Convert to IST: add 5.5 hours and adjust for local timezone
+  const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+  const year = istTime.getUTCFullYear();
+  const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(istTime.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Display current date in readable format
+function displayCurrentDate(){
+  const date = today();
+  const [year, month, day] = date.split('-');
+  const formatted = `${day}-${month}-${year}`;
+  const dateEl = document.getElementById('currentDate');
+  if(dateEl) dateEl.textContent = `Date: ${formatted}`;
+}
 
 function loadTheme() {
 
@@ -48,8 +66,12 @@ function toggleTheme() {
 }
 
 function prevDate(d){
- let x=new Date(d);x.setDate(x.getDate()-1);
- return x.toISOString().split('T')[0];
+ let x = new Date(d + 'T00:00:00Z');
+ x.setUTCDate(x.getUTCDate() - 1);
+ const year = x.getUTCFullYear();
+ const month = String(x.getUTCMonth() + 1).padStart(2, '0');
+ const day = String(x.getUTCDate()).padStart(2, '0');
+ return `${year}-${month}-${day}`;
 }
 
 function dayData(){
@@ -175,6 +197,8 @@ function render(){
  document.getElementById('added').textContent=added;
  document.getElementById('spent').textContent=spent;
  document.getElementById('remaining').textContent=remaining(d);
+ 
+ displayCurrentDate();
 
  let txHtml='';
  d.tx.slice().reverse().forEach(x=>{
@@ -273,16 +297,18 @@ if (dismissBtn) {
 loadTheme();
 render();
 
-// Auto-refresh when date changes (after 12 AM)
+// Auto-refresh when date changes (after 12 AM IST)
 let lastDate = today();
 setInterval(() => {
   const currentDate = today();
   if (currentDate !== lastDate) {
     lastDate = currentDate;
-    dayData(); // Initialize today's data
+    // Reinitialize database with new date
+    db = JSON.parse(localStorage.getItem(KEY)||'{}');
+    dayData(); // Initialize today's data with 0 spent
     render();  // Refresh the UI
   }
-}, 60000); // Check every minute
+}, 30000); // Check every 30 seconds
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
