@@ -273,6 +273,17 @@ if (dismissBtn) {
 loadTheme();
 render();
 
+// Auto-refresh when date changes (after 12 AM)
+let lastDate = today();
+setInterval(() => {
+  const currentDate = today();
+  if (currentDate !== lastDate) {
+    lastDate = currentDate;
+    dayData(); // Initialize today's data
+    render();  // Refresh the UI
+  }
+}, 60000); // Check every minute
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
