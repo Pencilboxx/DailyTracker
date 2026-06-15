@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Daily Wallet Pro</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+</head>
+<body>
+<div class="app-shell">
+    <header class="app-header">
+        <div>
+            <p class="eyebrow">Expense Tracker</p>
+            <h1>Daily Wallet Pro</h1>
+            <p class="subtitle">Manage daily spend, track budgets, and stay on top of your cash flow.</p>
+        </div>
+        <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+    </header>
+
+    <div id="installBanner" class="install-banner" style="display:none;">
+        <p>Install Daily Wallet Pro for quick access on your phone.</p>
+        <div>
+            <button id="installButton" class="primary">Install App</button>
+            <button id="dismissInstall" class="secondary">Later</button>
+        </div>
+    </div>
+
+    <section class="top-grid">
+        <div class="card budget-card">
+            <div class="card-title">
+                <h2>Set Today's Budget</h2>
+            </div>
+            <div class="field-row">
+                <input id="budget" type="number" placeholder="Today's Budget">
+                <button id="budgetBtn" class="primary" onclick="setBudget()">Save</button>
+            </div>
+        </div>
+
+        <div class="card summary-card">
+            <div class="card-title">
+                <h2>Today's Summary</h2>
+            </div>
+            <div class="summary-grid">
+                <div class="stat-card">
+                    <label>Opening</label>
+                    <strong>₹<span id="opening">0</span></strong>
+                </div>
+                <div class="stat-card">
+                    <label>Budget</label>
+                    <strong>₹<span id="budgetVal">0</span></strong>
+                </div>
+                <div class="stat-card">
+                    <label>Added</label>
+                    <strong>₹<span id="added">0</span></strong>
+                </div>
+                <div class="stat-card">
+                    <label>Spent</label>
+                    <strong>₹<span id="spent">0</span></strong>
+                </div>
+            </div>
+            <div class="remaining-row">
+                <span>Remaining</span>
+                <strong>₹<span id="remaining">0</span></strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="card form-card">
+        <div class="card-title">
+            <h2>Add Transaction</h2>
+        </div>
+        <div class="form-grid">
+            <select id="type">
+                <option value="spent">Spent</option>
+                <option value="added">Added</option>
+            </select>
+            <input id="amount" type="number" placeholder="Amount">
+            <input id="note" placeholder="Note">
+            <button class="primary" onclick="addTx()">Save</button>
+            <div class="voice-block">
+                <button class="secondary" onclick="voiceInput()" disabled>🎤 Voice</button>
+                <span class="voice-coming-soon">Coming soon for voice feature</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="card transactions-card">
+        <div class="card-title">
+            <h2>Recent Transactions</h2>
+        </div>
+        <div id="tx" class="transaction-list"></div>
+    </section>
+
+    <div class="tabs">
+        <button onclick="showTab('dashboard')" class="tab active">Dashboard</button>
+        <button onclick="showTab('history')" class="tab">History</button>
+    </div>
+
+    <div id="dashboardTab" class="tab-content">
+        <section class="card">
+            <div class="card-title"><h2>Dashboard View</h2></div>
+            <div id="dashboardTx" class="transaction-list"></div>
+        </section>
+    </div>
+
+    <div id="historyTab" class="tab-content" style="display:none;">
+        <section class="card">
+            <div class="card-title"><h2>History</h2></div>
+            <div class="history-row">
+                <select id="historyDate" onchange="loadHistory()"></select>
+            </div>
+            <div id="historyDetails"></div>
+        </section>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
