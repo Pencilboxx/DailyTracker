@@ -114,7 +114,20 @@
         <section class="card">
             <div class="card-title"><h2>History</h2></div>
             <div class="history-row">
-                <input id="historyDate" type="date" onchange="loadHistory()">
+                <div class="calendar-wrapper">
+                    <input id="historyDate" type="text" readonly placeholder="Select Date" class="calendar-input">
+                    <div id="calendarPicker" class="calendar-picker" style="display:none;">
+                        <div class="calendar-header">
+                            <button type="button" class="cal-nav" onclick="prevMonth()">←</button>
+                            <h3 id="calendarMonth"></h3>
+                            <button type="button" class="cal-nav" onclick="nextMonth()">→</button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                        </div>
+                        <div id="calendarDays" class="calendar-days"></div>
+                    </div>
+                </div>
             </div>
             <div id="historyDetails"></div>
         </section>

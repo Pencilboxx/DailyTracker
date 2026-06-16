@@ -281,6 +281,132 @@ button.secondary:hover,
     padding-bottom: 12px;
 }
 
+.calendar-wrapper {
+    position: relative;
+}
+
+.calendar-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.calendar-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.calendar-picker {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+    z-index: 1000;
+    min-width: 320px;
+    box-shadow: var(--shadow);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 12px;
+}
+
+.calendar-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    flex: 1;
+    text-align: center;
+}
+
+.cal-nav {
+    background: var(--surface-strong);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text);
+    transition: all 0.2s;
+}
+
+.cal-nav:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-size: 0.9rem;
+    background: var(--surface-strong);
+    color: var(--text);
+    transition: all 0.2s;
+}
+
+.calendar-day:hover:not(.disabled):not(.other-month) {
+    background: var(--primary);
+    color: white;
+}
+
+.calendar-day.today {
+    border-color: var(--primary);
+    font-weight: 600;
+}
+
+.calendar-day.selected {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+.calendar-day.disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.calendar-day.other-month {
+    color: var(--text-muted);
+    background: transparent;
+    cursor: default;
+}
+
 .voice-block {
     grid-column: 1 / -1;
     display: flex;

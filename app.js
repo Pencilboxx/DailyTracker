@@ -3,6 +3,10 @@ const KEY='DailyWalletV3';
 let db=JSON.parse(localStorage.getItem(KEY)||'{}');
 let deferredPrompt = null;
 
+// Calendar picker state
+let calendarCurrentDate = new Date();
+let availableDates = [];
+
 // Get today's date in IST (UTC+5:30)
 function today(){
   const now = new Date();
@@ -338,31 +342,116 @@ function showTab(tab){
 }
 
 function populateHistoryDates(){
-
-    const dateInput =
-        document.getElementById(
-            'historyDate'
-        );
-
-    const dates = Object.keys(db).sort();
+    availableDates = Object.keys(db).sort();
     
-    if(dates.length > 0){
-        dateInput.min = dates[0];
-        dateInput.max = dates[dates.length - 1];
-        dateInput.value = dates[dates.length - 1];
+    if(availableDates.length > 0){
+        calendarCurrentDate = new Date(availableDates[availableDates.length - 1]);
+        selectCalendarDate(availableDates[availableDates.length - 1]);
     }
+    
+    renderCalendar();
+    setupCalendarPicker();
+}
 
-    loadHistory();
+function setupCalendarPicker(){
+    const input = document.getElementById('historyDate');
+    const picker = document.getElementById('calendarPicker');
+    
+    if(input){
+        input.addEventListener('click', (e)=>{
+            e.stopPropagation();
+            picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+    
+    document.addEventListener('click', (e)=>{
+        if(!e.target.closest('.calendar-wrapper')){
+            picker.style.display = 'none';
+        }
+    });
+}
+
+function renderCalendar(){
+    const month = calendarCurrentDate.getMonth();
+    const year = calendarCurrentDate.getFullYear();
+    
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    document.getElementById('calendarMonth').textContent = `${monthNames[month]} ${year}`;
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    let html = '';
+    let date = new Date(startDate);
+    
+    for(let i = 0; i < 42; i++){
+        const dateStr = formatDateString(date);
+        const isCurrentMonth = date.getMonth() === month;
+        const hasData = availableDates.includes(dateStr);
+        const isSelected = dateStr === document.getElementById('historyDate').value;
+        const isToday = dateStr === today();
+        
+        let classList = 'calendar-day';
+        if(!isCurrentMonth) classList += ' other-month';
+        if(!hasData) classList += ' disabled';
+        if(isSelected) classList += ' selected';
+        if(isToday) classList += ' today';
+        
+        html += `<div class="${classList}" onclick="selectCalendarDate('${dateStr}')">${date.getDate()}</div>`;
+        
+        date.setDate(date.getDate() + 1);
+    }
+    
+    document.getElementById('calendarDays').innerHTML = html;
+}
+
+function formatDateString(date){
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function selectCalendarDate(dateStr){
+    const input = document.getElementById('historyDate');
+    const picker = document.getElementById('calendarPicker');
+    
+    if(availableDates.includes(dateStr)){
+        const [year, month, day] = dateStr.split('-');
+        const formattedDate = `${day}-${month}-${year}`;
+        input.value = formattedDate;
+        input.setAttribute('data-value', dateStr);
+        
+        calendarCurrentDate = new Date(dateStr);
+        renderCalendar();
+        picker.style.display = 'none';
+        loadHistory();
+    }
+}
+
+function prevMonth(){
+    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() - 1);
+    renderCalendar();
+}
+
+function nextMonth(){
+    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + 1);
+    renderCalendar();
 }
 
 function loadHistory(){
 
-    const date =
+    const input =
         document.getElementById(
             'historyDate'
-        ).value;
+        );
+    const dateStr = input.getAttribute('data-value');
 
-    const day = db[date];
+    const day = db[dateStr];
 
     if(!day) return;
 
