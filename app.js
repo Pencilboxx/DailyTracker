@@ -268,12 +268,6 @@ function render(){
  document.getElementById('tx').innerHTML=txHtml;
  const dashboardTx = document.getElementById('dashboardTx');
  if (dashboardTx) dashboardTx.innerHTML = txHtml;
-
- let h='';
- Object.keys(db).sort().reverse().forEach(k=>{
-   h+=`<div class="hist">${k} | Remaining ₹${remaining(db[k])}</div>`;
- });
- document.getElementById('history').innerHTML=h;
  updateBudgetButton();
 }
 
