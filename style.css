@@ -489,6 +489,16 @@ button:disabled {
     }
 }
 
+.budget-saved{
+    background:#9ca3af !important;
+    color:white !important;
+}
+
+#budget[readonly]{
+    opacity:0.7;
+    cursor:not-allowed;
+}
+
 @media (max-width: 620px) {
     .app-header {
         flex-direction: column;

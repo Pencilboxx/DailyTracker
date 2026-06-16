@@ -125,6 +125,41 @@ function setBudget() {
     updateBudgetButton();
 }
 
+function handleBudgetButton() {
+
+    const btn =
+        document.getElementById(
+            'budgetBtn'
+        );
+
+    const input =
+        document.getElementById(
+            'budget'
+        );
+
+    if (
+        btn.textContent ===
+        'Edit Budget'
+    ) {
+
+        input.readOnly = false;
+
+        input.focus();
+
+        btn.textContent =
+            'Save Budget';
+
+        btn.classList.remove(
+            'budget-saved'
+        );
+
+        return;
+    }
+
+    setBudget();
+}
+
+
 function updateBudgetButton() {
 
     const btn =
@@ -132,10 +167,27 @@ function updateBudgetButton() {
             'budgetBtn'
         );
 
+    const input =
+        document.getElementById(
+            'budget'
+        );
+
+    const status =
+        document.getElementById(
+            'budgetStatus'
+        );
+
     const budget =
         dayData().budget;
 
     if (budget > 0) {
+
+        status.innerHTML =
+            `Budget ₹${budget} ✓`;
+
+        input.value = budget;
+
+        input.readOnly = true;
 
         btn.textContent =
             'Edit Budget';
@@ -145,6 +197,11 @@ function updateBudgetButton() {
         );
 
     } else {
+
+        status.innerHTML =
+            'No budget set';
+
+        input.readOnly = false;
 
         btn.textContent =
             'Save Budget';
@@ -510,10 +567,6 @@ function loadHistory(){
 
             ${tx.type.toUpperCase()}
             ₹${tx.amount}
-
-            <br>
-
-            ${tx.category}
 
             <br>
 
