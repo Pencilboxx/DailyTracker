@@ -339,24 +339,18 @@ function showTab(tab){
 
 function populateHistoryDates(){
 
-    const ddl =
+    const dateInput =
         document.getElementById(
             'historyDate'
         );
 
-    ddl.innerHTML='';
-
-    Object.keys(db)
-        .sort()
-        .reverse()
-        .forEach(date=>{
-
-            ddl.innerHTML +=
-            `<option value="${date}">
-                ${date}
-            </option>`;
-
-        });
+    const dates = Object.keys(db).sort();
+    
+    if(dates.length > 0){
+        dateInput.min = dates[0];
+        dateInput.max = dates[dates.length - 1];
+        dateInput.value = dates[dates.length - 1];
+    }
 
     loadHistory();
 }
