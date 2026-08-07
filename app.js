@@ -271,8 +271,149 @@ function render(){
  updateBudgetButton();
 }
 
+const NUMBER_WORDS = {
+  zero: 0,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+  thirteen: 13,
+  fourteen: 14,
+  fifteen: 15,
+  sixteen: 16,
+  seventeen: 17,
+  eighteen: 18,
+  nineteen: 19,
+  twenty: 20,
+  thirty: 30,
+  forty: 40,
+  fifty: 50,
+  sixty: 60,
+  seventy: 70,
+  eighty: 80,
+  ninety: 90,
+  hundred: 100,
+  thousand: 1000,
+  lakh: 100000,
+  crore: 10000000,
+  million: 1000000
+};
+
+function parseNumberWords(tokens) {
+  let total = 0;
+  let current = 0;
+
+  for (const rawToken of tokens) {
+    const token = rawToken.toLowerCase().replace(/[^a-z0-9.]/g, '');
+    if (!token || token === 'and') continue;
+
+    if (/^\d+(?:\.\d+)?$/.test(token)) {
+      current += Number(token);
+      continue;
+    }
+
+    const value = NUMBER_WORDS[token];
+    if (value === undefined) {
+      if (token.includes('-')) {
+        const split = token.split('-').filter(Boolean);
+        const nested = parseNumberWords(split);
+        if (Number.isFinite(nested)) {
+          current += nested;
+          continue;
+        }
+      }
+      return Number.NaN;
+    }
+
+    if (token === 'hundred') {
+      current *= 100;
+    } else if (token === 'thousand') {
+      total += current * 1000;
+      current = 0;
+    } else if (token === 'lakh') {
+      total += current * 100000;
+      current = 0;
+    } else if (token === 'crore') {
+      total += current * 10000000;
+      current = 0;
+    } else if (token === 'million') {
+      total += current * 1000000;
+      current = 0;
+    } else {
+      current += value;
+    }
+  }
+
+  return total + current;
+}
+
+function parseVoiceCommand(rawText) {
+  const text = (rawText || '').toLowerCase().trim();
+  if (!text) return null;
+
+  const actionMatch = text.match(/^(?:add|added|income|received|received amount|spent|expense|pay|paid)\s+(.*)$/);
+  if (!actionMatch) return null;
+
+  const action = actionMatch[1].trim();
+  if (!action) return null;
+
+  const tokens = action.split(/\s+/).filter(Boolean);
+  const currencyWords = new Set(['rupee', 'rupees', 'rs', 'inr']);
+
+  let amountTokens = [];
+  let noteTokens = [];
+  let startedAmount = false;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i].replace(/[^a-z0-9.]/g, '').toLowerCase();
+    if (!token) continue;
+
+    if (currencyWords.has(token) && amountTokens.length > 0) {
+      continue;
+    }
+
+    const isAmountToken = /^\d+(?:\.\d+)?$/.test(token) || NUMBER_WORDS[token] !== undefined || token === 'hundred' || token === 'thousand' || token === 'lakh' || token === 'crore' || token === 'million';
+
+    if (isAmountToken) {
+      amountTokens.push(token);
+      startedAmount = true;
+      continue;
+    }
+
+    if (startedAmount) {
+      noteTokens = tokens.slice(i);
+      break;
+    }
+  }
+
+  if (amountTokens.length === 0) {
+    const numberMatch = action.match(/(\d+(?:\.\d+)?)/);
+    if (!numberMatch) return null;
+    const amount = Number(numberMatch[1]);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    const note = action.replace(numberMatch[1], '').replace(/^(rupee|rupees|rs|inr)\b\s*/i, '').trim();
+    const type = /^(spent|expense|pay|paid)/.test(text) ? 'spent' : 'added';
+    return { type, amount, note };
+  }
+
+  const amount = parseNumberWords(amountTokens);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+
+  const note = noteTokens.join(' ').replace(/^(rupee|rupees|rs|inr)\b\s*/i, '').trim();
+  const type = /^(spent|expense|pay|paid)/.test(text) ? 'spent' : 'added';
+  return { type, amount, note };
+}
+
 function voiceHelp(){
-  alert('Use voice like:\n\n"add 10"\nor\n"spent 30 tea"');
+  alert('Use voice like:\n\n"add 100"\n"spent 20"\n"spent 20 tea"');
 }
 
 function voiceInput(){
@@ -281,37 +422,27 @@ function voiceInput(){
  const rec=new SR();
  rec.lang='en-IN';
  rec.onresult=(e)=>{
-   const txt=e.results[0][0].transcript.toLowerCase().trim();
-   const addMatch = txt.match(/(?:\b|^)(?:add|added)\s+(\d+)(?:\b|$)/);
-   const spentMatch = txt.match(/(?:\b|^)spent\s+(\d+)(?:\s+(.+))?/);
+   const transcript = Array.from(e.results)
+     .map(result => result[0].transcript)
+     .join(' ')
+     .trim();
 
-   if (addMatch) {
-     document.getElementById('type').value = 'added';
-     document.getElementById('amount').value = addMatch[1];
-     document.getElementById('note').value = txt;
-     addTx();
+   const parsed = parseVoiceCommand(transcript);
+   if (!parsed) {
+     alert('Try saying: "add 100" or "spent 20"');
      return;
    }
 
-   if (spentMatch) {
-     if (!spentMatch[2]) {
-       alert('Please use "spent 10 tea" with a note after the amount.');
-       return;
-     }
-     document.getElementById('type').value = 'spent';
-     document.getElementById('amount').value = spentMatch[1];
-     document.getElementById('note').value = txt;
-     addTx();
-     return;
-   }
-
-   if (txt.includes('spent')) {
-     alert('Please use "spent 10 tea" with a note after the amount.');
-     return;
-   }
-
-   alert('Say: add 10 or spent 30 tea');
+   document.getElementById('type').value = parsed.type;
+   document.getElementById('amount').value = parsed.amount;
+   document.getElementById('note').value = parsed.note;
+   addTx();
  };
+
+ rec.onerror = () => {
+   alert('Voice command not recognized. Try: "add 100" or "spent 20"');
+ };
+
  rec.start();
 }
 
