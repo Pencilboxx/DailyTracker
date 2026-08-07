@@ -359,56 +359,61 @@ function parseVoiceCommand(rawText) {
   const text = (rawText || '').toLowerCase().trim();
   if (!text) return null;
 
-  const actionMatch = text.match(/^(?:add|added|income|received|received amount|spent|expense|pay|paid)\s+(.*)$/);
+  const actionMatch = text.match(/(add|added|income|received|deposit|salary|spent|spend|expense|pay|paid|withdraw|debit)/i);
   if (!actionMatch) return null;
 
-  const action = actionMatch[1].trim();
-  if (!action) return null;
+  const actionType = actionMatch[1].toLowerCase();
+  const type = ['spent', 'spend', 'expense', 'pay', 'paid', 'withdraw', 'debit'].includes(actionType) ? 'spent' : 'added';
 
-  const tokens = action.split(/\s+/).filter(Boolean);
-  const currencyWords = new Set(['rupee', 'rupees', 'rs', 'inr']);
+  const tokens = text.split(/\s+/).filter(Boolean);
+  const currencyWords = new Set(['rupee', 'rupees', 'rs', 'inr', 'dollar', 'dollars']);
 
   let amountTokens = [];
-  let noteTokens = [];
-  let startedAmount = false;
+  let noteStart = null;
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i].replace(/[^a-z0-9.]/g, '').toLowerCase();
     if (!token) continue;
 
-    if (currencyWords.has(token) && amountTokens.length > 0) {
+    if (currencyWords.has(token)) {
       continue;
     }
 
-    const isAmountToken = /^\d+(?:\.\d+)?$/.test(token) || NUMBER_WORDS[token] !== undefined || token === 'hundred' || token === 'thousand' || token === 'lakh' || token === 'crore' || token === 'million';
+    const isAmountToken =
+      /^\d+(?:\.\d+)?$/.test(token) ||
+      NUMBER_WORDS[token] !== undefined ||
+      ['hundred', 'thousand', 'lakh', 'crore', 'million', 'and', 'point'].includes(token) ||
+      (token.includes('-') && token.split('-').every(part => /^\d+(?:\.\d+)?$/.test(part) || NUMBER_WORDS[part] !== undefined));
 
     if (isAmountToken) {
       amountTokens.push(token);
-      startedAmount = true;
       continue;
     }
 
-    if (startedAmount) {
-      noteTokens = tokens.slice(i);
+    if (amountTokens.length > 0) {
+      noteStart = i;
       break;
     }
   }
 
   if (amountTokens.length === 0) {
-    const numberMatch = action.match(/(\d+(?:\.\d+)?)/);
+    const numberMatch = text.match(/(\d+(?:\.\d+)?)/);
     if (!numberMatch) return null;
     const amount = Number(numberMatch[1]);
     if (!Number.isFinite(amount) || amount <= 0) return null;
-    const note = action.replace(numberMatch[1], '').replace(/^(rupee|rupees|rs|inr)\b\s*/i, '').trim();
-    const type = /^(spent|expense|pay|paid)/.test(text) ? 'spent' : 'added';
+    const note = text.replace(numberMatch[1], '').replace(/^(?:add|added|income|received|deposit|salary|spent|spend|expense|pay|paid|withdraw|debit)\b\s*/i, '').replace(/^(?:rupee|rupees|rs|inr|dollar|dollars)\b\s*/i, '').trim();
     return { type, amount, note };
   }
 
   const amount = parseNumberWords(amountTokens);
   if (!Number.isFinite(amount) || amount <= 0) return null;
 
-  const note = noteTokens.join(' ').replace(/^(rupee|rupees|rs|inr)\b\s*/i, '').trim();
-  const type = /^(spent|expense|pay|paid)/.test(text) ? 'spent' : 'added';
+  const noteTokens = noteStart === null ? [] : tokens.slice(noteStart);
+  const note = noteTokens
+    .join(' ')
+    .replace(/^(?:rupee|rupees|rs|inr|dollar|dollars)\b\s*/i, '')
+    .trim();
+
   return { type, amount, note };
 }
 
@@ -422,11 +427,8 @@ function voiceInput(){
  const rec=new SR();
  rec.lang='en-IN';
  rec.onresult=(e)=>{
-   const transcript = Array.from(e.results)
-     .map(result => result[0].transcript)
-     .join(' ')
-     .trim();
-
+   const index = e.resultIndex ?? 0;
+   const transcript = (e.results[index][0].transcript || '').trim();
    const parsed = parseVoiceCommand(transcript);
    if (!parsed) {
      alert('Try saying: "add 100" or "spent 20"');
